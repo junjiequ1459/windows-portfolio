@@ -11,3 +11,20 @@ body {
 * {
   user-select: none;
 }
+/* react-resizable uses these classnames */
+.react-resizable-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  bottom: 0;
+  background: transparent;
+  z-index: 10;
+}
+
+.react-resizable-handle-se { right: 0; cursor: se-resize; }
+.react-resizable-handle-sw { left: 0; cursor: sw-resize; }
+
+/* Make handles easier to grab on mobile */
+@media (pointer: coarse) {
+  .react-resizable-handle { width: 24px; height: 24px; }
+}

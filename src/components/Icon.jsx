@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import Draggable from 'react-draggable';
 import useWindowStore from '../utils/windowStore';
 
-export default function Icon({ id, label, iconSrc, onDoubleClick, defaultPosition }) {
+export default function Icon({ id, label, iconSrc, onDoubleClick, defaultPosition, isMobile }) {
   const nodeRef = useRef(null);
   const { selectedIcon, selectIcon } = useWindowStore();
 
@@ -13,14 +13,24 @@ export default function Icon({ id, label, iconSrc, onDoubleClick, defaultPositio
   const handleClick = (e) => {
     e.stopPropagation();
     selectIcon(id);
+
+    // If mobile, open the window on single click
+    if (isMobile) {
+      onDoubleClick?.(); // same as openWindow(id)
+    }
   };
 
   return (
-    <Draggable nodeRef={nodeRef} bounds="parent" defaultPosition={defaultPosition}>
+    <Draggable
+      nodeRef={nodeRef}
+      bounds="parent"
+      defaultPosition={defaultPosition}
+      disabled={isMobile}
+    >
       <div
         ref={nodeRef}
         onClick={handleClick}
-        onDoubleClick={onDoubleClick}
+        onDoubleClick={!isMobile ? onDoubleClick : undefined}
         className="absolute flex flex-col items-center gap-1 cursor-pointer select-none"
       >
         <div

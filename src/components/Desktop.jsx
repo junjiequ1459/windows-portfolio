@@ -1,7 +1,7 @@
 // src/components/Desktop.jsx
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useWindowStore from '../utils/windowStore';
 import Taskbar from './Taskbar';
 import Icon from './Icon';
@@ -13,6 +13,14 @@ import { appList } from '../constants/apps';
 
 export default function Desktop() {
   const { windows, openWindow, deselectIcon, isShutdownScreenActive } = useWindowStore();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = () => deselectIcon();
@@ -33,6 +41,7 @@ export default function Desktop() {
             iconSrc={app.icon}
             defaultPosition={{ x: 40, y: 40 + index * 120 }}
             onDoubleClick={() => openWindow(app.id)}
+            isMobile={isMobile} // 👈 pass down
           />
         ))}
 

@@ -2,33 +2,44 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { PlayIcon, PauseIcon, BackwardIcon, ForwardIcon } from '@heroicons/react/20/solid';
+import {
+  PlayIcon,
+  PauseIcon,
+  BackwardIcon,
+  ForwardIcon,
+} from '@heroicons/react/20/solid';
 import useWindowStore from '../../utils/windowStore';
 
 const songs = [
   {
     title: 'Intentions',
     artist: 'starfall',
-    audio: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/intentions.mp3',
-    cover: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/starfall.jpg',
+    audio:
+      'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/intentions.mp3',
+    cover:
+      'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/starfall.jpg',
   },
   {
     title: 'Odo',
     artist: 'Ado',
-    audio: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/odo.mp3',
-    cover: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/odo-min.jpg',
+    audio:
+      'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/odo.mp3',
+    cover:
+      'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/odo-min.jpg',
   },
   {
     title: 'DtMF',
     artist: 'Bad Bunny',
-    audio: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/mas+fotos.mp3',
-    cover: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/mas-fotos.jpg',
+    audio:
+      'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/mas+fotos.mp3',
+    cover:
+      'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/mas-fotos.jpg',
   },
 ];
 
 export default function MusicPlayerApp() {
   const audioRef = useRef(null);
-  const { closeWindow } = useWindowStore();
+  const { closeWindow, minimizeWindow } = useWindowStore();
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -45,11 +56,7 @@ export default function MusicPlayerApp() {
   const togglePlayback = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
+    isPlaying ? audio.pause() : audio.play();
     setIsPlaying(!isPlaying);
   };
 
@@ -95,18 +102,33 @@ export default function MusicPlayerApp() {
     };
   }, [currentSongIndex]);
 
+  // Check if mobile (you can move this to a shared hook)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none">
-      {/* Music Player Card */}
-      <div className="relative z-10 bg-[#121212]/80 text-white w-[360px] p-4 rounded-2xl shadow-2xl flex flex-col items-center gap-4 backdrop-blur-sm">
-        {/* Top Bar */}
-        <div className="w-full flex justify-end">
+    <div className="relative w-full h-full select-none flex items-center justify-center">
+      <div
+        className={`${
+          isMobile
+            ? 'w-full h-full bg-[#121212] rounded-none shadow-none p-6'
+            : 'w-[360px] bg-[#121212]/80 rounded-2xl shadow-2xl backdrop-blur-sm p-4'
+        } flex flex-col items-center gap-4`}
+      >
+        {/* Top Bar with Minimize and Close */}
+        <div className="w-full flex justify-end space-x-2">
+          <button
+            onClick={() => minimizeWindow('music')}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/20 transition"
+            aria-label="Minimize"
+          >
+            <span className="text-white text-xs font-bold -mt-[2px]">_</span>
+          </button>
           <button
             onClick={() => closeWindow('music')}
-            className="cursor-pointer text-white bg-white/10 hover:bg-white/20 rounded-full p-1 transition"
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/20 transition"
             aria-label="Close"
           >
-            <X size={16} />
+            <X size={16} className="text-white" />
           </button>
         </div>
 
@@ -124,7 +146,7 @@ export default function MusicPlayerApp() {
           <p className="text-xs text-gray-400">{currentSong.artist}</p>
         </div>
 
-        {/* Progress Bar with Hover Tooltip */}
+        {/* Progress Bar */}
         <div className="relative w-full">
           <input
             type="range"
@@ -163,13 +185,12 @@ export default function MusicPlayerApp() {
 
         {/* Controls */}
         <div className="flex items-center gap-6 mt-2">
-<button onClick={playPrevious} className="cursor-pointer">
+          <button onClick={playPrevious} className="cursor-pointer">
             <BackwardIcon className="w-6 h-6 text-white hover:text-gray-300 transition" />
           </button>
           <button
             onClick={togglePlayback}
             className="cursor-pointer w-12 h-12 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition"
-            
           >
             {isPlaying ? (
               <PauseIcon className="w-6 h-6 text-black" />

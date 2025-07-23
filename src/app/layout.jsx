@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Windows Portfolio',
+  title: 'JunjieQu Portfolio',
   description: 'Portfolio styled like a Windows desktop',
 };
 

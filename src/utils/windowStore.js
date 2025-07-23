@@ -44,7 +44,7 @@ const useWindowStore = create((set, get) => ({
           windows: state.windows.map((w) =>
             w.id === id ? { ...w, minimized: false, z: get().nextZ() } : w
           ),
-          isStartMenuOpen: false, // Close start menu when opening window
+          isStartMenuOpen: false,
         };
       }
 
@@ -64,7 +64,7 @@ const useWindowStore = create((set, get) => ({
             position: { x: 120, y: 120 },
           },
         ],
-        isStartMenuOpen: false, // Close start menu when opening window
+        isStartMenuOpen: false,
       };
     });
   },
@@ -84,7 +84,9 @@ const useWindowStore = create((set, get) => ({
   restoreWindow: (id) =>
     set((state) => ({
       windows: state.windows.map((w) =>
-        w.id === id ? { ...w, minimized: false, maximized: false, z: get().nextZ() } : w
+        w.id === id
+          ? { ...w, minimized: false, maximized: false, z: get().nextZ() }
+          : w
       ),
     })),
 
@@ -92,7 +94,12 @@ const useWindowStore = create((set, get) => ({
     set((state) => ({
       windows: state.windows.map((w) =>
         w.id === id
-          ? { ...w, maximized: !w.maximized, minimized: false, z: get().nextZ() }
+          ? {
+              ...w,
+              maximized: !w.maximized,
+              minimized: false,
+              z: get().nextZ(),
+            }
           : w
       ),
     })),
@@ -120,26 +127,25 @@ const useWindowStore = create((set, get) => ({
 
   // Desktop Icon Selection
   selectIcon: (id) => set({ selectedIcon: id }),
-  
+
   deselectIcon: () => set({ selectedIcon: null }),
 
   // Shutdown Screen Actions
-  triggerShutdownScreen: () => 
-    set({ 
+  triggerShutdownScreen: () =>
+    set({
       isShutdownScreenActive: true,
-      isStartMenuOpen: false, // Close start menu when shutting down
+      isStartMenuOpen: false,
     }),
 
-  deactivateShutdownScreen: () => 
+  deactivateShutdownScreen: () =>
     set({ isShutdownScreenActive: false }),
 
   // Utility Actions
-  closeAllWindows: () =>
-    set({ windows: [] }),
+  closeAllWindows: () => set({ windows: [] }),
 
   minimizeAllWindows: () =>
     set((state) => ({
-      windows: state.windows.map((w) => ({ ...w, minimized: true }))
+      windows: state.windows.map((w) => ({ ...w, minimized: true })),
     })),
 
   // Get specific window
