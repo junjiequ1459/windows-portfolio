@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 import {
   PlayIcon,
   PauseIcon,
   BackwardIcon,
   ForwardIcon,
 } from '@heroicons/react/20/solid';
-import useWindowStore from '../../utils/windowStore';
 
 const songs = [
   {
@@ -37,15 +35,37 @@ const songs = [
   },
 ];
 
-export default function MusicPlayerApp() {
+export default function MusicPlayerApp({ onSizeChange }) {
   const audioRef = useRef(null);
-  const { closeWindow, minimizeWindow } = useWindowStore();
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [hoverTime, setHoverTime] = useState(null);
   const [hoverX, setHoverX] = useState(0);
   const currentSong = songs[currentSongIndex];
+
+  // Self-contained sizing logic
+  useEffect(() => {
+    const updateSize = () => {
+      const isMobile = window.innerWidth < 768;
+      
+      if (isMobile) {
+        onSizeChange?.({ width: window.innerWidth, height: window.innerHeight - 64 });
+      } else {
+        // Desktop sizing - compact music player
+        const width = Math.max(350, Math.min(400, window.innerWidth * 0.3));
+        const height = Math.max(400, Math.min(600, window.innerHeight * 0.7));
+        onSizeChange?.({ width, height });
+      }
+    };
+
+    // Set initial size
+    updateSize();
+
+    // Update size on window resize
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [onSizeChange]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -102,48 +122,24 @@ export default function MusicPlayerApp() {
     };
   }, [currentSongIndex]);
 
-  // Check if mobile (you can move this to a shared hook)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
   return (
-    <div className="relative w-full h-full select-none flex items-center justify-center">
-      <div
-        className={`${
-          isMobile
-            ? 'w-full h-full bg-[#121212] rounded-none shadow-none p-6'
-            : 'w-[360px] bg-[#121212]/80 rounded-2xl shadow-2xl backdrop-blur-sm p-4'
-        } flex flex-col items-center gap-4`}
-      >
-        {/* Top Bar with Minimize and Close */}
-        <div className="w-full flex justify-end space-x-2">
-          <button
-            onClick={() => minimizeWindow('music')}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/20 transition"
-            aria-label="Minimize"
-          >
-            <span className="text-white text-xs font-bold -mt-[2px]">_</span>
-          </button>
-          <button
-            onClick={() => closeWindow('music')}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/20 transition"
-            aria-label="Close"
-          >
-            <X size={16} className="text-white" />
-          </button>
+    <div className="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="bg-black/80 backdrop-blur-sm text-white rounded-2xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center gap-6">
+        
+        {/* Album Cover */}
+        <div className="relative">
+          <img
+            src={currentSong.cover}
+            alt="Album Cover"
+            draggable={false}
+            className="w-48 h-48 rounded-lg object-cover shadow-lg"
+          />
         </div>
 
-        {/* Album Cover */}
-        <img
-          src={currentSong.cover}
-          alt="Album Cover"
-          draggable={false}
-          className="w-48 h-48 rounded-lg object-cover shadow-md"
-        />
-
         {/* Song Info */}
-        <div className="text-center">
-          <p className="text-sm font-medium truncate">{currentSong.title}</p>
-          <p className="text-xs text-gray-400">{currentSong.artist}</p>
+        <div className="text-center w-full">
+          <h3 className="text-lg font-semibold truncate mb-1">{currentSong.title}</h3>
+          <p className="text-sm text-gray-400">{currentSong.artist}</p>
         </div>
 
         {/* Progress Bar */}
@@ -168,14 +164,14 @@ export default function MusicPlayerApp() {
               }
             }}
             onMouseLeave={() => setHoverTime(null)}
-            className="w-full appearance-none h-1 bg-white rounded cursor-pointer"
+            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
             style={{
-              background: `linear-gradient(to right, white ${progress}%, rgba(255,255,255,0.2) ${progress}%)`,
+              background: `linear-gradient(to right, #1db954 ${progress}%, rgba(255,255,255,0.2) ${progress}%)`,
             }}
           />
           {hoverTime && (
             <div
-              className="absolute -top-6 text-xs bg-white text-black px-2 py-1 rounded shadow"
+              className="absolute -top-8 text-xs bg-white text-black px-2 py-1 rounded shadow-lg pointer-events-none"
               style={{ left: hoverX, transform: 'translateX(-50%)' }}
             >
               {hoverTime}
@@ -184,22 +180,30 @@ export default function MusicPlayerApp() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-6 mt-2">
-          <button onClick={playPrevious} className="cursor-pointer">
-            <BackwardIcon className="w-6 h-6 text-white hover:text-gray-300 transition" />
+        <div className="flex items-center justify-center gap-8 w-full">
+          <button 
+            onClick={playPrevious} 
+            className="text-white hover:text-green-400 transition-colors duration-200"
+          >
+            <BackwardIcon className="w-8 h-8" />
           </button>
+          
           <button
             onClick={togglePlayback}
-            className="cursor-pointer w-12 h-12 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition"
+            className="w-14 h-14 rounded-full bg-white hover:bg-gray-100 flex items-center justify-center transition-all duration-200 hover:scale-105"
           >
             {isPlaying ? (
-              <PauseIcon className="w-6 h-6 text-black" />
+              <PauseIcon className="w-6 h-6 text-black ml-0" />
             ) : (
-              <PlayIcon className="w-6 h-6 text-black" />
+              <PlayIcon className="w-6 h-6 text-black ml-1" />
             )}
           </button>
-          <button onClick={playNext}>
-            <ForwardIcon className="cursor-pointer w-6 h-6 text-white hover:text-gray-300 transition" />
+          
+          <button 
+            onClick={playNext}
+            className="text-white hover:text-green-400 transition-colors duration-200"
+          >
+            <ForwardIcon className="w-8 h-8" />
           </button>
         </div>
 
@@ -213,6 +217,29 @@ export default function MusicPlayerApp() {
           <source src={currentSong.audio} type="audio/mpeg" />
         </audio>
       </div>
+
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: #1db954;
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .slider::-moz-range-thumb {
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: #1db954;
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+      `}</style>
     </div>
   );
 }

@@ -40,15 +40,22 @@ export default function Taskbar() {
   };
 
   const getAppIcon = (id) => {
-    const app = appList.find((app) => app.id === id);
+    const app = appList.find((a) => a.id === id);
     return app?.icon || '/icons/default.png';
   };
 
   return (
     <div className="absolute bottom-0 left-0 w-full min-h-16 bg-neutral-900 border-t border-neutral-700 flex items-center justify-between z-40 px-4 flex-wrap">
-      
-      {/* Center: Start Button + Open Windows */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 max-w-[90vw] py-1">
+      {/* Center group: Start + open windows 
+          - Mobile: static, justify-start
+          - Desktop: absolutely centered */}
+      <div
+        className="
+          flex flex-wrap items-center gap-2 py-1 max-w-[90vw]
+          justify-start
+          md:justify-center md:absolute md:left-1/2 md:-translate-x-1/2
+        "
+      >
         {/* Start Button */}
         <button onClick={toggleStartMenu}>
           <img
@@ -81,8 +88,8 @@ export default function Taskbar() {
         ))}
       </div>
 
-      {/* Right: Weather + Clock */}
-      <div className="flex items-center space-x-4 ml-auto">
+      {/* Right side: Weather + Clock */}
+      <div className="flex items-center space-x-4 ml-auto md:ml-0">
         <WeatherWidget />
 
         {/* Clock + Calendar */}

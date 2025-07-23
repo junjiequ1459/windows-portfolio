@@ -1,6 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import './styles/glass.css';
+
 
 /* Optional: Global resets & custom styles */
 body {
@@ -28,3 +30,5 @@ body {
 @media (pointer: coarse) {
   .react-resizable-handle { width: 24px; height: 24px; }
 }
+
+

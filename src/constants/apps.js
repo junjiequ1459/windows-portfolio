@@ -1,5 +1,6 @@
 import MusicApp from '../components/apps/MusicPlayerApp';
 import BrowserApp from '../components/apps/BrowserApp';
+import ChatGPTApp from '../components/apps/ChatGPTApp'; // ✅
 
 export const appList = [
   {
@@ -15,6 +16,12 @@ export const appList = [
     icon: '/icons/browser.png',
     component: BrowserApp,
     openable: true,
-  }
-
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    icon: '/icons/chatgpt.png',
+    component: ChatGPTApp,
+    openable: true,
+  },
 ];

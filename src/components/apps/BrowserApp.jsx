@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import useWindowStore from '../../utils/windowStore';
 
-export default function BrowserApp() {
+export default function BrowserApp({ onSizeChange }) {
   const { closeWindow } = useWindowStore();
 
   const defaultUrl = 'https://wikipedia.org';
@@ -20,6 +20,29 @@ export default function BrowserApp() {
   const [activeTabId, setActiveTabId] = useState(tabs[0].id);
 
   const iframeRefs = useRef({});
+
+  // Self-contained sizing logic
+  useEffect(() => {
+    const updateSize = () => {
+      const isMobile = window.innerWidth < 768;
+      
+      if (isMobile) {
+        onSizeChange?.({ width: window.innerWidth, height: window.innerHeight - 64 });
+      } else {
+        // Desktop sizing - responsive browser window
+        const width = Math.max(600, Math.min(1200, window.innerWidth * 0.8));
+        const height = Math.max(500, Math.min(800, window.innerHeight * 0.8));
+        onSizeChange?.({ width, height });
+      }
+    };
+
+    // Set initial size
+    updateSize();
+
+    // Update size on window resize
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [onSizeChange]);
 
   const updateTab = (id, changes) => {
     setTabs((prev) =>
