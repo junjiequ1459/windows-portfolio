@@ -1,23 +1,50 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { Pause, Play, X } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { PlayIcon, PauseIcon, BackwardIcon, ForwardIcon } from '@heroicons/react/20/solid';
 import useWindowStore from '../../utils/windowStore';
+
+const songs = [
+  {
+    title: 'Intentions',
+    artist: 'starfall',
+    audio: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/intentions.mp3',
+    cover: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/starfall.jpg',
+  },
+  {
+    title: 'Odo',
+    artist: 'Ado',
+    audio: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/odo.mp3',
+    cover: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/odo-min.jpg',
+  },
+  {
+    title: 'DtMF',
+    artist: 'Bad Bunny',
+    audio: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/mas+fotos.mp3',
+    cover: 'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/mas-fotos.jpg',
+  },
+];
 
 export default function MusicPlayerApp() {
   const audioRef = useRef(null);
   const { closeWindow } = useWindowStore();
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [hoverTime, setHoverTime] = useState(null);
+  const [hoverX, setHoverX] = useState(0);
+  const currentSong = songs[currentSongIndex];
 
-  const audioUrl =
-    'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/starfall+-+intentions+(official+music+video).mp3';
-  const coverUrl =
-    'https://portfolio-junjiequ1459.s3.us-east-1.amazonaws.com/music/album-cover/starfall.jpg';
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const togglePlayback = () => {
     const audio = audioRef.current;
     if (!audio) return;
-
     if (isPlaying) {
       audio.pause();
     } else {
@@ -26,14 +53,57 @@ export default function MusicPlayerApp() {
     setIsPlaying(!isPlaying);
   };
 
+  const playNext = () => {
+    setIsPlaying(false);
+    setCurrentSongIndex((prev) => (prev + 1) % songs.length);
+  };
+
+  const playPrevious = () => {
+    setIsPlaying(false);
+    setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+  };
+
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (audio && audio.duration) {
+      setProgress((audio.currentTime / audio.duration) * 100);
+    }
+  };
+
+  const handleSeek = (e) => {
+    const audio = audioRef.current;
+    const value = e.target.value;
+    if (audio && audio.duration) {
+      audio.currentTime = (value / 100) * audio.duration;
+      setProgress(value);
+    }
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.load();
+    setProgress(0);
+
+    const playAfterLoad = () => {
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    };
+
+    audio.addEventListener('loadedmetadata', playAfterLoad);
+    return () => {
+      audio.removeEventListener('loadedmetadata', playAfterLoad);
+    };
+  }, [currentSongIndex]);
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-transparent">
-      <div className="bg-[#121212] text-white w-[360px] p-4 rounded-2xl shadow-2xl flex flex-col items-center gap-4 relative">
-        {/* Top Nav Bar */}
+    <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none">
+      {/* Music Player Card */}
+      <div className="relative z-10 bg-[#121212]/80 text-white w-[360px] p-4 rounded-2xl shadow-2xl flex flex-col items-center gap-4 backdrop-blur-sm">
+        {/* Top Bar */}
         <div className="w-full flex justify-end">
           <button
             onClick={() => closeWindow('music')}
-            className="text-white bg-white/10 hover:bg-white/20 rounded-full p-1 transition"
+            className="cursor-pointer text-white bg-white/10 hover:bg-white/20 rounded-full p-1 transition"
             aria-label="Close"
           >
             <X size={16} />
@@ -42,7 +112,7 @@ export default function MusicPlayerApp() {
 
         {/* Album Cover */}
         <img
-          src={coverUrl}
+          src={currentSong.cover}
           alt="Album Cover"
           draggable={false}
           className="w-48 h-48 rounded-lg object-cover shadow-md"
@@ -50,22 +120,77 @@ export default function MusicPlayerApp() {
 
         {/* Song Info */}
         <div className="text-center">
-          <p className="text-sm font-medium truncate">
-            starfall - intentions
-          </p>
-          <p className="text-xs text-gray-400">You</p>
+          <p className="text-sm font-medium truncate">{currentSong.title}</p>
+          <p className="text-xs text-gray-400">{currentSong.artist}</p>
         </div>
 
-        {/* Play/Pause Button */}
-        <button
-          onClick={togglePlayback}
-          className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition"
-        >
-          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-        </button>
+        {/* Progress Bar with Hover Tooltip */}
+        <div className="relative w-full">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={progress}
+            onChange={handleSeek}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const percent = x / rect.width;
+              const audio = audioRef.current;
+              if (audio?.duration) {
+                const time = percent * audio.duration;
+                setHoverTime(formatTime(time));
+                setHoverX(x);
+              }
+            }}
+            onMouseLeave={() => setHoverTime(null)}
+            className="w-full appearance-none h-1 bg-white rounded cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, white ${progress}%, rgba(255,255,255,0.2) ${progress}%)`,
+            }}
+          />
+          {hoverTime && (
+            <div
+              className="absolute -top-6 text-xs bg-white text-black px-2 py-1 rounded shadow"
+              style={{ left: hoverX, transform: 'translateX(-50%)' }}
+            >
+              {hoverTime}
+            </div>
+          )}
+        </div>
 
-        {/* Hidden Audio Element */}
-        <audio ref={audioRef} src={audioUrl} preload="auto" onEnded={() => setIsPlaying(false)} />
+        {/* Controls */}
+        <div className="flex items-center gap-6 mt-2">
+<button onClick={playPrevious} className="cursor-pointer">
+            <BackwardIcon className="w-6 h-6 text-white hover:text-gray-300 transition" />
+          </button>
+          <button
+            onClick={togglePlayback}
+            className="cursor-pointer w-12 h-12 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition"
+            
+          >
+            {isPlaying ? (
+              <PauseIcon className="w-6 h-6 text-black" />
+            ) : (
+              <PlayIcon className="w-6 h-6 text-black" />
+            )}
+          </button>
+          <button onClick={playNext}>
+            <ForwardIcon className="cursor-pointer w-6 h-6 text-white hover:text-gray-300 transition" />
+          </button>
+        </div>
+
+        {/* Audio Element */}
+        <audio
+          ref={audioRef}
+          preload="auto"
+          onEnded={playNext}
+          onTimeUpdate={handleTimeUpdate}
+        >
+          <source src={currentSong.audio} type="audio/mpeg" />
+        </audio>
       </div>
     </div>
   );
