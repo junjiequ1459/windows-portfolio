@@ -31,10 +31,9 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
   const [maximized, setMaximized] = useState(false);
 
   const prevLayoutRef = useRef({ size: null, position: null });
+  const TASKBAR_H = 64;
 
-  const TASKBAR_H = 64; // adjust if your taskbar height differs
-
-  // ---- utils ----
+  // --- utils ---
   const getCanvasSize = useCallback(() => {
     const parent = nodeRef.current?.parentElement;
     if (parent) {
@@ -46,18 +45,17 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
 
   const noop = useCallback(() => {}, []);
 
-  // ---- mobile check ----
+  // --- media query (but keep ONE render tree) ---
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // ---- keep normal windows in viewport ----
+  // keep window inside canvas (desktop, not maximized)
   useEffect(() => {
     if (isMobile || maximized) return;
-
     const adjust = () => {
       const canvas = getCanvasSize();
       if (!hasMoved && !hasResized) {
@@ -71,34 +69,36 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
         }));
       }
     };
-
     adjust();
     window.addEventListener('resize', adjust);
     return () => window.removeEventListener('resize', adjust);
   }, [isMobile, maximized, hasMoved, hasResized, size.width, size.height, getCanvasSize]);
 
-  // ---- sync size while maximized ----
+  // sync while maximized or mobile
   useEffect(() => {
-    if (!maximized) return;
+    if (!(maximized || isMobile)) return;
     const sync = () => {
       const canvas = getCanvasSize();
       setSize(canvas);
       updateWindowSize(id, canvas);
+      setPosition({ x: 0, y: 0 });
+      updateWindowPosition(id, { x: 0, y: 0 });
     };
     sync();
     window.addEventListener('resize', sync);
     return () => window.removeEventListener('resize', sync);
-  }, [maximized, getCanvasSize, id, updateWindowSize]);
+  }, [maximized, isMobile, getCanvasSize, id, updateWindowPosition, updateWindowSize]);
 
-  // ---- callbacks ----
+  // child size change
   const handleSizeChange = useCallback(
     (next) => {
-      if (maximized) return; // block child resizing while fullscreen
+      if (maximized || isMobile) return;
       setSize(next);
       updateWindowSize(id, next);
     },
-    [maximized, id, updateWindowSize]
+    [maximized, isMobile, id, updateWindowSize]
   );
+  const safeSizeChange = maximized || isMobile ? noop : handleSizeChange;
 
   const toggleMaximize = () => {
     if (!maximized) {
@@ -121,9 +121,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     }
   };
 
-  // ---- app content ----
-  const safeSizeChange = maximized ? noop : handleSizeChange;
-
   const renderAppContent = () => {
     switch (id) {
       case 'browser':
@@ -137,7 +134,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     }
   };
 
-  // ---- header buttons ----
   const headerButtons = () => {
     if (isMobile) {
       return (
@@ -177,7 +173,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     );
   };
 
-  // ---- shell ----
   const WindowShell = (
     <motion.div
       initial={false}
@@ -190,7 +185,7 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
       className={`w-full h-full ${
         !showHeader
           ? ''
-          : isMobile || maximized
+          : (isMobile || maximized)
               ? 'bg-white flex flex-col'
               : 'bg-white rounded shadow-lg flex flex-col overflow-hidden'
       }`}
@@ -206,59 +201,19 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
           <div className="flex space-x-2">{headerButtons()}</div>
         </div>
       )}
-
-      {/* app body */}
-      {!showHeader ? renderAppContent() : <div className="flex-1 min-h-0">{renderAppContent()}</div>}
+      <div className="flex-1 min-h-0">{renderAppContent()}</div>
     </motion.div>
   );
 
-  // ---- mobile ----
-  if (isMobile) {
-    return (
-      <div
-        ref={nodeRef}
-        className="absolute"
-        style={{
-          zIndex: z,
-          left: 0,
-          top: 0,
-          width: '100vw',
-          height: `calc(100vh - ${TASKBAR_H}px)`,
-        }}
-        onMouseDown={() => focusWindow(id)}
-      >
-        <div style={{ width: size.width, height: size.height }}>{WindowShell}</div>
-      </div>
-    );
-  }
-
-  // ---- desktop ----
-  const content =
-    maximized ? (
-      <div style={{ width: size.width, height: size.height }}>{WindowShell}</div>
-    ) : (
-      <ResizableBox
-        width={size.width}
-        height={size.height}
-        minConstraints={[300, 200]}
-        onResizeStop={(e, data) => {
-          const next = { width: data.size.width, height: data.size.height };
-          setSize(next);
-          setHasResized(true);
-          updateWindowSize(id, next);
-        }}
-      >
-        {WindowShell}
-      </ResizableBox>
-    );
+  const full = maximized || isMobile;
 
   return (
     <Draggable
-      handle={showHeader && !maximized ? '.window-header' : null}
+      handle={showHeader && !full ? '.window-header' : null}
       bounds="parent"
       nodeRef={nodeRef}
       position={position}
-      disabled={maximized}
+      disabled={full}
       onStop={(e, data) => {
         setPosition({ x: data.x, y: data.y });
         setHasMoved(true);
@@ -272,7 +227,26 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
         style={{ zIndex: z }}
         onMouseDown={() => focusWindow(id)}
       >
-        {content}
+        <ResizableBox
+          width={size.width}
+          height={size.height}
+          minConstraints={[300, 200]}
+          resizeHandles={full ? [] : ['se', 'e', 's']}
+          onResizeStop={(e, data) => {
+            if (full) return;
+            const next = { width: data.size.width, height: data.size.height };
+            setSize(next);
+            setHasResized(true);
+            updateWindowSize(id, next);
+          }}
+          handle={(h, ref) =>
+            full ? null : (
+              <span className={`react-resizable-handle react-resizable-handle-${h}`} ref={ref} />
+            )
+          }
+        >
+          {WindowShell}
+        </ResizableBox>
       </div>
     </Draggable>
   );
