@@ -16,27 +16,31 @@ export default function StartMenu() {
   const menuRef = useRef(null);
 
   useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (menuRef.current && !menuRef.current.contains(event.target)) {
-      closeStartMenu();
-    }
-  };
+    const handleClickOutside = (event) => {
+      const startButton = document.getElementById('start-button');
+      const clickedStartButton = startButton && startButton.contains(event.target);
 
-  const handleKeyDown = (event) => {
-    if (event.key === 'Escape') {
-      closeStartMenu();
-    }
-  };
+      if (clickedStartButton) return; // Don't close if Start button was clicked
 
-  document.addEventListener('mousedown', handleClickOutside);
-  document.addEventListener('keydown', handleKeyDown);
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        closeStartMenu();
+      }
+    };
 
-  return () => {
-    document.removeEventListener('mousedown', handleClickOutside);
-    document.removeEventListener('keydown', handleKeyDown);
-  };
-}, [closeStartMenu]);
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        closeStartMenu();
+      }
+    };
 
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [closeStartMenu]);
 
   if (!isStartMenuOpen) return null;
 
@@ -49,6 +53,7 @@ export default function StartMenu() {
       ref={menuRef}
       className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[420px] h-[500px] bg-neutral-800 text-white border border-neutral-700 shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col animate-fade-in"
     >
+      {/* Search bar */}
       <div className="p-4 border-b border-neutral-700 bg-neutral-700">
         <input
           type="text"
@@ -59,8 +64,8 @@ export default function StartMenu() {
         />
       </div>
 
+      {/* App List */}
       <div className="flex-1 overflow-y-auto px-4 py-2">
-        {/* Pinned Section - always visible */}
         <div className="font-semibold text-sm mb-2">Pinned</div>
         <ul className="grid grid-cols-3 gap-2 text-sm mb-4">
           <li className="hover:bg-neutral-700 px-3 py-2 rounded cursor-pointer">
@@ -83,7 +88,7 @@ export default function StartMenu() {
           </li>
         </ul>
 
-        {/* All Apps - filtered by search */}
+        {/* All Apps */}
         <div className="font-semibold text-sm mt-2 mb-2">All Apps</div>
         <ul className="grid grid-cols-3 gap-2 text-sm">
           {filteredApps.length === 0 ? (
@@ -103,6 +108,7 @@ export default function StartMenu() {
         </ul>
       </div>
 
+      {/* Shutdown */}
       <div
         onClick={triggerShutdownScreen}
         className="border-t border-neutral-700 px-4 py-3 text-sm hover:bg-neutral-700 cursor-pointer text-center"

@@ -33,7 +33,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
   const prevLayoutRef = useRef({ size: null, position: null });
   const TASKBAR_H = 64;
 
-  // --- utils ---
   const getCanvasSize = useCallback(() => {
     const parent = nodeRef.current?.parentElement;
     if (parent) {
@@ -45,7 +44,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
 
   const noop = useCallback(() => {}, []);
 
-  // --- media query (but keep ONE render tree) ---
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     onResize();
@@ -53,7 +51,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // keep window inside canvas (desktop, not maximized)
   useEffect(() => {
     if (isMobile || maximized) return;
     const adjust = () => {
@@ -74,7 +71,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     return () => window.removeEventListener('resize', adjust);
   }, [isMobile, maximized, hasMoved, hasResized, size.width, size.height, getCanvasSize]);
 
-  // sync while maximized or mobile
   useEffect(() => {
     if (!(maximized || isMobile)) return;
     const sync = () => {
@@ -89,7 +85,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     return () => window.removeEventListener('resize', sync);
   }, [maximized, isMobile, getCanvasSize, id, updateWindowPosition, updateWindowSize]);
 
-  // child size change
   const handleSizeChange = useCallback(
     (next) => {
       if (maximized || isMobile) return;
@@ -179,7 +174,6 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
       animate={{
         opacity: minimized ? 0 : 1,
         scale: minimized ? 0.95 : 1,
-        pointerEvents: minimized ? 'none' : 'auto',
       }}
       transition={{ duration: 0.12, ease: 'easeInOut' }}
       className={`w-full h-full ${
@@ -192,9 +186,12 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
     >
       {showHeader && (
         <div
-          className={`window-header bg-blue-600 text-white px-4 py-2 flex justify-between items-center ${
-            isMobile || maximized ? '' : 'cursor-move'
-          }`}
+          className={`window-header 
+            bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 
+            text-white px-4 py-2 
+            flex justify-between items-center 
+            shadow-sm rounded-t-md 
+            ${isMobile || maximized ? '' : 'cursor-move'}`}
           onDoubleClick={!isMobile ? toggleMaximize : undefined}
         >
           <span className="font-semibold">{title}</span>
@@ -224,7 +221,7 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
       <div
         ref={nodeRef}
         className="absolute"
-        style={{ zIndex: z }}
+        style={{ zIndex: minimized ? -1 : z }}
         onMouseDown={() => focusWindow(id)}
       >
         <ResizableBox
@@ -245,7 +242,12 @@ export default function Window({ id, title, z, minimized, showHeader = true }) {
             )
           }
         >
-          {WindowShell}
+          <div
+            className={`${minimized ? 'invisible pointer-events-none opacity-0' : ''}`}
+            style={{ height: '100%' }}
+          >
+            {WindowShell}
+          </div>
         </ResizableBox>
       </div>
     </Draggable>

@@ -1,4 +1,3 @@
-// src/utils/windowStore.js
 import { create } from 'zustand';
 import { appList } from '../constants/apps';
 
@@ -9,19 +8,14 @@ const useWindowStore = create((set, get) => ({
   nextZIndex: 10,
   selectedIcon: null,
   isShutdownScreenActive: false,
+  focusedWindow: null, // 🔥 Add this
 
   // Start Menu Actions
   toggleStartMenu: () => {
     set((state) => ({ isStartMenuOpen: !state.isStartMenuOpen }));
   },
-
-  closeStartMenu: () => {
-    set({ isStartMenuOpen: false });
-  },
-
-  openStartMenu: () => {
-    set({ isStartMenuOpen: true });
-  },
+  closeStartMenu: () => set({ isStartMenuOpen: false }),
+  openStartMenu: () => set({ isStartMenuOpen: true }),
 
   // Z-Index Management
   nextZ: () => {
@@ -30,25 +24,23 @@ const useWindowStore = create((set, get) => ({
     return next;
   },
 
-  // Window Management Actions
+  // Window Actions
   openWindow: (id) => {
     const app = appList.find((a) => a.id === id);
     if (!app) return;
 
     set((state) => {
-      // Check if window already exists
       const existing = state.windows.find((w) => w.id === id);
       if (existing) {
-        // If exists, restore and focus it
         return {
           windows: state.windows.map((w) =>
             w.id === id ? { ...w, minimized: false, z: get().nextZ() } : w
           ),
+          focusedWindow: id,
           isStartMenuOpen: false,
         };
       }
 
-      // Create new window
       return {
         windows: [
           ...state.windows,
@@ -64,6 +56,7 @@ const useWindowStore = create((set, get) => ({
             position: { x: 120, y: 120 },
           },
         ],
+        focusedWindow: app.id,
         isStartMenuOpen: false,
       };
     });
@@ -72,6 +65,7 @@ const useWindowStore = create((set, get) => ({
   closeWindow: (id) =>
     set((state) => ({
       windows: state.windows.filter((w) => w.id !== id),
+      focusedWindow: state.focusedWindow === id ? null : state.focusedWindow,
     })),
 
   minimizeWindow: (id) =>
@@ -79,6 +73,7 @@ const useWindowStore = create((set, get) => ({
       windows: state.windows.map((w) =>
         w.id === id ? { ...w, minimized: true } : w
       ),
+      focusedWindow: state.focusedWindow === id ? null : state.focusedWindow,
     })),
 
   restoreWindow: (id) =>
@@ -88,6 +83,7 @@ const useWindowStore = create((set, get) => ({
           ? { ...w, minimized: false, maximized: false, z: get().nextZ() }
           : w
       ),
+      focusedWindow: id,
     })),
 
   maximizeWindow: (id) =>
@@ -102,6 +98,7 @@ const useWindowStore = create((set, get) => ({
             }
           : w
       ),
+      focusedWindow: id,
     })),
 
   focusWindow: (id) =>
@@ -109,6 +106,7 @@ const useWindowStore = create((set, get) => ({
       windows: state.windows.map((w) =>
         w.id === id ? { ...w, z: get().nextZ() } : w
       ),
+      focusedWindow: id,
     })),
 
   updateWindowPosition: (id, position) =>
@@ -125,52 +123,28 @@ const useWindowStore = create((set, get) => ({
       ),
     })),
 
-  // Desktop Icon Selection
   selectIcon: (id) => set({ selectedIcon: id }),
-
   deselectIcon: () => set({ selectedIcon: null }),
 
-  // Shutdown Screen Actions
   triggerShutdownScreen: () =>
     set({
       isShutdownScreenActive: true,
       isStartMenuOpen: false,
     }),
+  deactivateShutdownScreen: () => set({ isShutdownScreenActive: false }),
 
-  deactivateShutdownScreen: () =>
-    set({ isShutdownScreenActive: false }),
-
-  // Utility Actions
-  closeAllWindows: () => set({ windows: [] }),
+  closeAllWindows: () => set({ windows: [], focusedWindow: null }),
 
   minimizeAllWindows: () =>
     set((state) => ({
       windows: state.windows.map((w) => ({ ...w, minimized: true })),
+      focusedWindow: null,
     })),
 
-  // Get specific window
-  getWindow: (id) => {
-    const state = get();
-    return state.windows.find((w) => w.id === id);
-  },
-
-  // Get active (non-minimized) windows
-  getActiveWindows: () => {
-    const state = get();
-    return state.windows.filter((w) => !w.minimized);
-  },
-
-  // Get minimized windows
-  getMinimizedWindows: () => {
-    const state = get();
-    return state.windows.filter((w) => w.minimized);
-  },
-
-  // Check if window exists
-  windowExists: (id) => {
-    const state = get();
-    return state.windows.some((w) => w.id === id);
-  },
+  getWindow: (id) => get().windows.find((w) => w.id === id),
+  getActiveWindows: () => get().windows.filter((w) => !w.minimized),
+  getMinimizedWindows: () => get().windows.filter((w) => w.minimized),
+  windowExists: (id) => get().windows.some((w) => w.id === id),
 }));
 
 export default useWindowStore;

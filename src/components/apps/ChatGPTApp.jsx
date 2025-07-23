@@ -86,41 +86,42 @@ export default function ChatGPTApp({ onSizeChange }) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full bg-[#1e1e1e] text-white">
-      {/* Chat Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={msg.role === 'user' ? 'text-right' : 'text-left'}>
-            <div
-              className={`inline-block px-4 py-2 rounded-lg max-w-[80%] ${
-                msg.role === 'user' ? 'bg-[#3a3a3a]' : 'bg-[#2f2f2f] text-gray-200'
-              }`}
-            >
-              {msg.content}
-            </div>
+<div className="flex flex-col h-full bg-[#1e1e1e] text-white pb-16 md:pb-0">
+    {/* Chat Area */}
+    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
+      {messages.map((msg, idx) => (
+        <div key={idx} className={msg.role === 'user' ? 'text-right' : 'text-left'}>
+          <div
+            className={`inline-block px-4 py-2 rounded-lg max-w-[80%] ${
+              msg.role === 'user' ? 'bg-[#3a3a3a]' : 'bg-[#2f2f2f] text-gray-200'
+            }`}
+          >
+            {msg.content}
           </div>
-        ))}
-        {loading && (
-          <div className="text-left">
-            <div className="inline-block px-4 py-2 rounded-lg bg-[#2f2f2f] text-gray-400 text-sm">
-              ChatGPT is thinking...
-            </div>
+        </div>
+      ))}
+      {loading && (
+        <div className="text-left">
+          <div className="inline-block px-4 py-2 rounded-lg bg-[#2f2f2f] text-gray-400 text-sm">
+            ChatGPT is thinking...
           </div>
-        )}
-      </div>
-
-      {/* Input Bar */}
-      <form
-        onSubmit={sendMessage}
-        className="p-3 border-t border-neutral-700 bg-[#2c2c2c]"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          className="w-full px-4 py-2 text-sm text-white bg-[#3a3a3a] rounded-full border border-neutral-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </form>
+        </div>
+      )}
     </div>
-  );
+
+    {/* Input Bar */}
+    <form
+      onSubmit={sendMessage}
+      className="p-3 border-t border-neutral-700 bg-[#2c2c2c]"
+    >
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type a message..."
+        className="w-full px-4 py-2 text-sm text-white bg-[#3a3a3a] rounded-full border border-neutral-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </form>
+  </div>
+);
+
 }

@@ -11,20 +11,19 @@ export default function Taskbar() {
     windows,
     toggleStartMenu,
     focusedWindow,
-    focusWindow,
     restoreWindow,
+    minimizeWindow,
   } = useWindowStore();
 
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef(null);
-
   const [currentTime, setCurrentTime] = useState(new Date());
+
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Close calendar when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (calendarRef.current && !calendarRef.current.contains(e.target)) {
@@ -46,20 +45,16 @@ export default function Taskbar() {
 
   return (
     <div className="fixed bottom-0 left-0 w-full z-40">
-      {/* Bar shell */}
       <div className="h-16 bg-neutral-900 border-t border-neutral-700 px-4 relative flex items-center">
-        {/* Center group (Start + open windows)
-            - Mobile: justify-start
-            - Desktop: centered via absolute */}
+        {/* Start button + open windows */}
         <div
           className="
             flex flex-wrap items-center gap-2 py-1 max-w-[90vw]
-            justify-start
-            md:justify-center md:absolute md:left-1/2 md:-translate-x-1/2
+            justify-start md:justify-center md:absolute md:left-1/2 md:-translate-x-1/2
           "
         >
-          {/* Start Button */}
-          <button onClick={toggleStartMenu}>
+          {/* ✅ Start Button with ID */}
+          <button id="start-button" onClick={toggleStartMenu}>
             <img
               src="/icons/windows.png"
               alt="Start"
@@ -68,33 +63,36 @@ export default function Taskbar() {
           </button>
 
           {/* Open Windows */}
-          {windows.map((win) => (
-            <button
-              key={win.id}
-              onClick={() => {
-                if (win.minimized) restoreWindow(win.id);
-                else focusWindow(win.id);
-              }}
-              className={`w-10 h-10 rounded-md flex items-center justify-center border ${
-                focusedWindow === win.id
-                  ? 'border-blue-400 bg-neutral-800'
-                  : 'border-transparent hover:bg-neutral-700'
-              }`}
-            >
-              <img
-                src={getAppIcon(win.id)}
-                alt={win.id}
-                className="w-6 h-6 object-contain"
-              />
-            </button>
-          ))}
+          {windows
+            .filter((win) => win.id !== 'start')
+            .map((win) => (
+              <button
+                key={win.id}
+                onClick={() => {
+                  if (focusedWindow === win.id && !win.minimized) {
+                    minimizeWindow(win.id);
+                  } else {
+                    restoreWindow(win.id);
+                  }
+                }}
+                className={`w-10 h-10 rounded-md flex items-center justify-center border ${
+                  focusedWindow === win.id && !win.minimized
+                    ? 'border-blue-400 bg-neutral-800'
+                    : 'border-transparent hover:bg-neutral-700'
+                }`}
+              >
+                <img
+                  src={getAppIcon(win.id)}
+                  alt={win.id}
+                  className="w-6 h-6 object-contain"
+                />
+              </button>
+            ))}
         </div>
 
-        {/* Right side: Weather + Clock (always bottom-right) */}
+        {/* Weather + Clock */}
         <div className="ml-auto flex items-center space-x-4">
           <WeatherWidget />
-
-          {/* Clock + Calendar */}
           <div className="relative" ref={calendarRef}>
             <div
               onClick={() => setShowCalendar((prev) => !prev)}
@@ -114,7 +112,6 @@ export default function Taskbar() {
                 })}
               </div>
             </div>
-
             {showCalendar && (
               <div className="absolute bottom-16 right-0 z-50">
                 <CustomCalendar onDateSelect={handleDateSelect} />

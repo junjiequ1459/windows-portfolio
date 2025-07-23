@@ -123,8 +123,8 @@ export default function MusicPlayerApp({ onSizeChange }) {
   }, [currentSongIndex]);
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-black/80 backdrop-blur-sm text-white rounded-2xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center gap-6">
+<div className="w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center p-4">
+<div className="bg-neutral-900/80 backdrop-blur-md text-white rounded-2xl shadow-xl p-6 w-full max-w-sm flex flex-col items-center gap-6">
         
         {/* Album Cover */}
         <div className="relative">
