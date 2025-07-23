@@ -1,25 +1,50 @@
 // src/components/Desktop.jsx
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
+import useWindowStore from '../utils/windowStore';
 import Taskbar from './Taskbar';
 import Icon from './Icon';
 import Window from './Window';
-import useWindowStore from '../utils/windowStore';
+import StartMenu from './StartMenu';
+import CityCanvas from './CityCanvas';
+import ShutdownScreen from './ShutdownScreen';
+import { appList } from '../constants/apps';
 
 export default function Desktop() {
-  const { windows, openWindow } = useWindowStore();
+  const { windows, openWindow, deselectIcon, isShutdownScreenActive } = useWindowStore();
+
+  useEffect(() => {
+    const handleClickOutside = () => deselectIcon();
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [deselectIcon]);
 
   return (
-    <div className="relative h-screen w-screen bg-blue-800 overflow-hidden">
-      <div className="absolute top-4 left-4">
-        <Icon label="File Explorer" onDoubleClick={() => openWindow('explorer')} />
-        <Icon label="Music Player" onDoubleClick={() => openWindow('music')} />
+    <>
+      <div className="relative w-screen h-screen overflow-hidden">
+        <CityCanvas />
+
+        {appList.map((app, index) => (
+          <Icon
+            key={app.id}
+            id={app.id}
+            label={app.name}
+            iconSrc={app.icon}
+            defaultPosition={{ x: 40, y: 40 + index * 120 }}
+            onDoubleClick={() => openWindow(app.id)}
+          />
+        ))}
+
+        {windows.map((win) => (
+          <Window key={win.id} {...win} />
+        ))}
+
+        <StartMenu />
+        <Taskbar />
       </div>
 
-      {windows.map((win) => (
-        <Window key={win.id} {...win} />
-      ))}
-
-      <Taskbar />
-    </div>
+      {isShutdownScreenActive && <ShutdownScreen />}
+    </>
   );
 }

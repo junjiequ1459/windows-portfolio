@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Global resets & custom styles */
+body {
+  @apply m-0 p-0 box-border overflow-hidden;
+  font-family: sans-serif;
+}
+
+* {
+  user-select: none;
+}
